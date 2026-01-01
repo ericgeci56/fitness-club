@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FitWizard | AI Personal Trainer</title>
+    
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        :root {
+            --bg-primary: #000000;
+            --bg-secondary: #0a0a0a;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --accent-gold: #d4af37;
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.6);
+            --font-main: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding-bottom: 90px; /* Space for nav */
+        }
+
+        /* Luxury Glass Effect */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(212, 175, 55, 0.3);
+            transform: translateY(-2px);
+        }
+
+        /* Typography */
+        h1, h2, h3 { letter-spacing: -0.5px; }
+        h1 { font-size: 2rem; margin-bottom: 0.5rem; background: linear-gradient(to right, #fff, #999); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .text-gold { color: var(--accent-gold); -webkit-text-fill-color: var(--accent-gold); }
+        .text-sec { color: var(--text-secondary); font-size: 0.9rem; }
+
+        /* Buttons */
+        .btn {
+            width: 100%;
+            padding: 1rem;
+            border-radius: 14px;
+            border: none;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .btn-primary { background: var(--accent-gold); color: #000; }
+        .btn-primary:hover { filter: brightness(1.1); transform: scale(1.02); }
+        .btn-ghost { background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--glass-border); }
+
+        /* Inputs */
+        input, select {
+            width: 100%;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid var(--glass-border);
+            color: white;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            font-size: 1rem;
+            outline: none;
+        }
+        input:focus, select:focus { border-color: var(--accent-gold); }
+
+        /* Navigation */
+        .nav-bar {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            height: 80px;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 100;
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: var(--text-secondary);
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .nav-item.active { color: var(--accent-gold); }
+        .nav-item svg { width: 24px; height: 24px; }
+
+        /* Utilities */
+        .container { max-width: 600px; margin: 0 auto; padding: 2rem 1.5rem; }
+        .fade-in { animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- COMPONENTS ---
+
+        // 1. Navigation Bar
+        const Navbar = ({ currentView, setView }) => {
+            const icons = {
+                dashboard: "Activity",
+                chat: "MessageSquare",
+                library: "Dumbbell"
+            };
+
+            // Lucide icons are injected as SVGs by the library, but in React we render placeholders
+            // For this single-file demo, we use simple text/emoji or render SVG manually if needed.
+            // Using Lucide's createIcons method in useEffect is tricky in React. 
+            // We will use SVG directly for reliability in this specific file.
+            
+            return (
+                <nav className="nav-bar">
+                    <div className={`nav-item ${currentView === 'dashboard' ? 'active' : ''}`} onClick={() => setView('dashboard')}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                        <span>Dashboard</span>
+                    </div>
+                    <div className={`nav-item ${currentView === 'chat' ? 'active' : ''}`} onClick={() => setView('chat')}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        <span>Coaches</span>
+                    </div>
+                    <div className={`nav-item ${currentView === 'library' ? 'active' : ''}`} onClick={() => setView('library')}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6.5 6.5 11 11"/><path d="m21 21-1-1"/><path d="m3 3 1 1"/><path d="m18 22 4-4"/><path d="m2 6 4-4"/><path d="m3 10 7-7"/><path d="m14 21 7-7"/></svg>
+                        <span>Library</span>
+                    </div>
+                </nav>
+            );
+        };
+
+        // 2. Assessment Page (Onboarding)
+        const Assessment = ({ onComplete }) => {
+            const [formData, setFormData] = useState({ name: '', goal: 'fat_loss' });
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                localStorage.setItem('fitwizard_user', JSON.stringify(formData));
+                onComplete();
+            };
+
+            return (
+                <div className="container fade-in">
+                    <h1 className="text-gold">Initiation</h1>
+                    <p className="text-sec" style={{marginBottom: '2rem'}}>Configure your FitWizard protocols.</p>
+                    
+                    <form onSubmit={handleSubmit} className="glass-card">
+                        <label className="text-sec">Operative Name</label>
+                        <input required type="text" placeholder="John Doe" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                        
+                        <label className="text-sec">Primary Objective</label>
+                        <select value={formData.goal} onChange={e => setFormData({...formData, goal: e.target.value})}>
+                            <option value="fat_loss">Fat Loss (Cut)</option>
+                            <option value="muscle">Hypertrophy (Bulk)</option>
+                            <option value="strength">Strength & Performance</option>
+                        </select>
+
+                        <button className="btn btn-primary" type="submit">Initialize System</button>
+                    </form>
+                </div>
+            );
+        };
+
+        // 3. Dashboard Page
+        const Dashboard = () => {
+            const user = JSON.parse(localStorage.getItem('fitwizard_user') || '{}');
+            
+            return (
+                <div className="container fade-in">
+                    <header style={{ marginBottom: '2rem' }}>
+                        <p className="text-sec">Welcome back,</p>
+                        <h1>{user.name || 'Operative'}</h1>
+                    </header>
+
+                    <div className="glass-card">
+                        <h3 className="text-gold">Daily Directive</h3>
+                        <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:'1rem'}}>
+                            <div>
+                                <h2 style={{fontSize:'1.5rem'}}>Push Day A</h2>
+                                <p className="text-sec">Chest • Shoulders • Triceps</p>
+                            </div>
+                            <div style={{background:'var(--accent-gold)', color:'black', padding:'0.5rem 1rem', borderRadius:'8px', fontWeight:'bold'}}>
+                                START
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'1rem'}}>
+                        <div className="glass-card">
+                            <p className="text-sec">Calories</p>
+                            <h2 style={{marginTop:'0.5rem'}}>2,450</h2>
+                            <p className="text-sec" style={{fontSize:'0.7rem', color:'var(--accent-gold)'}}>ON TARGET</p>
+                        </div>
+                        <div className="glass-card">
+                            <p className="text-sec">Protein</p>
+                            <h2 style={{marginTop:'0.5rem'}}>180g</h2>
+                            <p className="text-sec" style={{fontSize:'0.7rem'}}>30g REMAINING</p>
+                        </div>
+                    </div>
+
+                    <div className="glass-card">
+                        <h3>Recovery Metrics</h3>
+                        <p className="text-sec" style={{marginTop:'0.5rem'}}>Sleep: 7h 20m • HRV: 65ms</p>
+                        <div style={{width:'100%', height:'4px', background:'rgba(255,255,255,0.1)', marginTop:'1rem', borderRadius:'2px'}}>
+                            <div style={{width:'75%', height:'100%', background:'var(--accent-gold)'}}></div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // 4. Chatbot Page
+        const Chatbot = () => {
+            const [activeBot, setActiveBot] = useState('steve');
+            const [input, setInput] = useState('');
+            const [messages, setMessages] = useState([
+                { role: 'system', content: "System initialized. Select an assistant." }
+            ]);
+
+            const handleSend = (e) => {
+                e.preventDefault();
+                if(!input) return;
+                
+                const newMsgs = [...messages, { role: 'user', content: input }];
+                setMessages(newMsgs);
+                setInput('');
+
+                // Mock AI Response
+                setTimeout(() => {
+                    const response = activeBot === 'steve' 
+                        ? "Stop analyzing and start lifting. The data suggests you're stalling because of effort, not programming."
+                        : "I hear you. Change is hard. Let's focus on just one small win for today's meal.";
+                    
+                    setMessages([...newMsgs, { role: 'assistant', content: response }]);
+                }, 800);
+            };
+
+            return (
+                <div className="container fade-in" style={{height:'80vh', display:'flex', flexDirection:'column'}}>
+                    <div style={{display:'flex', gap:'1rem', marginBottom:'1rem'}}>
+                        <button className={`btn ${activeBot === 'steve' ? 'btn-primary' : 'btn-ghost'}`} onClick={() => setActiveBot('steve')}>Steve 👨‍⚕️</button>
+                        <button className={`btn ${activeBot === 'lana' ? 'btn-primary' : 'btn-ghost'}`} onClick={() => setActiveBot('lana')}>Lana 👩‍⚕️</button>
+                    </div>
+
+                    <div className="glass-card" style={{flex:1, overflowY:'auto', display:'flex', flexDirection:'column', gap:'1rem'}}>
+                        {messages.filter(m => m.role !== 'system').map((m, i) => (
+                            <div key={i} style={{
+                                alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start',
+                                background: m.role === 'user' ? 'var(--accent-gold)' : 'rgba(255,255,255,0.05)',
+                                color: m.role === 'user' ? 'black' : 'white',
+                                padding: '1rem',
+                                borderRadius: '12px',
+                                maxWidth: '80%',
+                                fontSize: '0.95rem',
+                                lineHeight: '1.4'
+                            }}>
+                                {m.content}
+                            </div>
+                        ))}
+                        {messages.length === 1 && <div style={{textAlign:'center', color:'var(--text-secondary)', marginTop:'2rem'}}>No messages yet. Ask {activeBot === 'steve' ? 'Steve about performance.' : 'Lana about habits.'}</div>}
+                    </div>
+
+                    <form onSubmit={handleSend} style={{marginTop:'1rem', display:'flex', gap:'0.5rem'}}>
+                        <input value={input} onChange={e => setInput(e.target.value)} placeholder="Type a message..." style={{marginBottom:0}} />
+                        <button type="submit" className="btn btn-primary" style={{width:'auto', padding:'0 1.5rem'}}>
+                             ➤
+                        </button>
+                    </form>
+                </div>
+            );
+        };
+
+        // 5. Library Page (Placeholder)
+        const Library = () => (
+            <div className="container fade-in">
+                <h1 className="text-gold">Exercise Library</h1>
+                <input type="text" placeholder="Search movements..." />
+                
+                {['Barbell Squat', 'Deadlift', 'Bench Press', 'Overhead Press'].map((ex, i) => (
+                    <div key={i} className="glass-card" style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                        <div>
+                            <h3 style={{fontSize:'1.1rem'}}>{ex}</h3>
+                            <p className="text-sec">Compound • Strength</p>
+                        </div>
+                        <div style={{color:'var(--accent-gold)'}}>►</div>
+                    </div>
+                ))}
+            </div>
+        );
+
+        // --- MAIN APP ---
+        const App = () => {
+            const [view, setView] = useState('assessment');
+
+            useEffect(() => {
+                const user = localStorage.getItem('fitwizard_user');
+                if (user) {
+                    setView('dashboard');
+                }
+            }, []);
+
+            const handleAssessmentComplete = () => {
+                setView('dashboard');
+            };
+
+            if (view === 'assessment') {
+                return <Assessment onComplete={handleAssessmentComplete} />;
+            }
+
+            return (
+                <>
+                    {view === 'dashboard' && <Dashboard />}
+                    {view === 'chat' && <Chatbot />}
+                    {view === 'library' && <Library />}
+                    <Navbar currentView={view} setView={setView} />
+                </>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
